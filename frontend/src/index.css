@@ -3070,8 +3070,319 @@ body::after {
   .ax__footer-meta { font-size: 10px; }
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   SECURE MEDIA VIEWER — Fullscreen encrypted media overlay
+   ═══════════════════════════════════════════════════════════════ */
 
+/* ── Backdrop ── */
+.secure-viewer__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.92);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
+/* ── Container ── */
+.secure-viewer__container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #000;
+}
+
+/* ── Header ── */
+.secure-viewer__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: #0a0a0a;
+  border-bottom: 1px solid #222;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.secure-viewer__header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #888;
+}
+
+.secure-viewer__label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #888;
+}
+
+.secure-viewer__header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.secure-viewer__filename {
+  font-size: 12px;
+  color: #666;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Header Buttons ── */
+.secure-viewer__btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  border: 1px solid #333;
+  background: #111;
+  color: #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.secure-viewer__btn:hover {
+  background: #222;
+  border-color: #444;
+  color: #fff;
+}
+
+.secure-viewer__btn--close {
+  background: #fff;
+  color: #000;
+  border-color: #fff;
+  font-weight: 700;
+}
+
+.secure-viewer__btn--close:hover {
+  background: #e0e0e0;
+  border-color: #e0e0e0;
+  color: #000;
+}
+
+/* ── Badges ── */
+.secure-viewer__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 2em;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.secure-viewer__badge--view-once {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #aaa;
+}
+
+.secure-viewer__badge--timer {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #aaa;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.secure-viewer__badge--urgent {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #fff;
+  animation: gh-pulse 0.5s ease-in-out infinite;
+}
+
+/* ── Content ── */
+.secure-viewer__content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 16px;
+}
+
+.secure-viewer__content img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 6px;
+}
+
+.secure-viewer__content video {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 6px;
+}
+
+.secure-viewer__content audio {
+  width: 100%;
+  max-width: 500px;
+}
+
+/* ── Timer Bar ── */
+.secure-viewer__timer-bar {
+  height: 3px;
+  background: #1a1a1a;
+  flex-shrink: 0;
+}
+
+.secure-viewer__timer-fill {
+  height: 100%;
+  background: #fff;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MEDIA MESSAGE — Encrypted file cards in chat
+   ═══════════════════════════════════════════════════════════════ */
+.media-msg {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  border: 1px solid #222;
+  background: #0a0a0a;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  max-width: 320px;
+}
+
+.media-msg:hover {
+  background: #111;
+  border-color: #333;
+}
+
+.media-msg--expired,
+.media-msg--error {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.media-msg__icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid #222;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #888;
+  flex-shrink: 0;
+}
+
+.media-msg__spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #333;
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: media-spin 0.6s linear infinite;
+}
+
+@keyframes media-spin {
+  to { transform: rotate(360deg); }
+}
+
+.media-msg__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.media-msg__title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #e8e8e8;
+}
+
+.media-msg__meta {
+  font-size: 11px;
+  color: #666;
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.media-msg__dot {
+  margin: 0 4px;
+}
+
+.media-msg__badges {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.media-msg__badge {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+}
+
+.media-msg__badge--encrypted {
+  background: rgba(255, 255, 255, 0.06);
+  color: #888;
+}
+
+.media-msg__badge--viewed {
+  background: rgba(255, 255, 255, 0.06);
+  color: #666;
+}
+
+.media-msg__badge--ephemeral {
+  background: rgba(255, 255, 255, 0.06);
+  color: #888;
+  width: auto;
+  border-radius: 2em;
+  padding: 2px 6px;
+  gap: 3px;
+  font-size: 9px;
+}
+
+.media-msg__expired-content,
+.media-msg__error-content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #666;
+}
+
+.media-msg__expired-reason {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: #555;
+  margin-top: 4px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 480px) {
+  .secure-viewer__header { padding: 8px 10px; }
+  .secure-viewer__filename { display: none; }
+  .secure-viewer__btn { width: 32px; height: 32px; }
+  .secure-viewer__content { padding: 8px; }
+  .media-msg { max-width: 260px; padding: 8px 10px; }
+}
 
 
 /* Header â€” glassmorphism command bar */
