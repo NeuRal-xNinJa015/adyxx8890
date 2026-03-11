@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Copy, Check, ArrowLeft, Loader, RefreshCw, QrCode } from 'lucide-react'
 import * as ws from '../lib/ws'
 import QRCodeCanvas from './QRCode.jsx'
@@ -138,17 +138,26 @@ export default function WaitingRoom({ roomCode, onPeerJoined, onBack, onRoomRege
                         <QrCode size={12} />
                         {showQR ? 'HIDE QR' : 'SHOW QR CODE'}
                     </button>
-                    {showQR && (
-                        <div className="waiting__qr-container">
-                            <QRCodeCanvas
-                                text={`${window.location.origin}/join/${roomCode.toUpperCase()}`}
-                                size={140}
-                                fgColor="#ffffff"
-                                bgColor="transparent"
-                            />
-                            <span className="waiting__qr-label">Scan to Join</span>
-                        </div>
-                    )}
+                    <AnimatePresence>
+                        {showQR && (
+                            <motion.div
+                                className="waiting__qr-container"
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                                style={{ overflow: 'hidden' }}
+                            >
+                                <QRCodeCanvas
+                                    text={`${window.location.origin}/join/${roomCode.toUpperCase()}`}
+                                    size={140}
+                                    fgColor="#ffffff"
+                                    bgColor="transparent"
+                                />
+                                <span className="waiting__qr-label">Scan to Join</span>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
 
                 {/* Copy button */}

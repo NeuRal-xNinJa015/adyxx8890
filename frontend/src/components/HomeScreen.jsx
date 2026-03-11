@@ -182,7 +182,7 @@ export default function HomeScreen({ onCreateRoom, onJoinRoom, wsConnected, wsEr
                             <span className="home__btn-label">{creating ? 'Creating...' : 'Create Room'}</span>
                             <span className="home__btn-desc">
                                 {!wsConnected
-                                    ? 'cannot connected to server . waiting for connection'
+                                    ? 'cannot connect to server . waiting for connection'
                                     : 'Start a new private session. Share the generated code with anyone you want to talk to. No signup needed.'
                                 }
                             </span>

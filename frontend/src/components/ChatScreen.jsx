@@ -490,9 +490,10 @@ export default function ChatScreen({ roomCode, isCreator, onEndSession }) {
         const urlRegex = /(https?:\/\/[^\s]+)/g
         const parts = text.split(urlRegex)
         const urls = text.match(urlRegex) || []
+        const urlSet = new Set(urls)
 
         const inlineContent = parts.map((part, i) => {
-            if (urlRegex.test(part)) {
+            if (urlSet.has(part)) {
                 return <a key={`link-${i}`} href={part} target="_blank" rel="noopener noreferrer" className="msg__link">{part}</a>
             }
             return part
@@ -647,7 +648,7 @@ export default function ChatScreen({ roomCode, isCreator, onEndSession }) {
                             initial={{ width: 0, opacity: 0 }}
                             animate={{ width: 220, opacity: 1 }}
                             exit={{ width: 0, opacity: 0 }}
-                            transition={{ duration: 0.2 }}
+                            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
                         >
                             <div className="chat__sidebar-content">
                                 <div className="chat__sidebar-section">
@@ -930,9 +931,10 @@ export default function ChatScreen({ roomCode, isCreator, onEndSession }) {
                             {peerTyping && (
                                 <motion.div
                                     className="msg msg--typing"
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: -10 }}
+                                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                                 >
                                     <div className="msg__bubble msg__bubble--typing">
                                         <span className="typing-dots">

@@ -95,19 +95,19 @@ export default function SplashScreen({ onDone }) {
 
             {/* Corner brackets */}
             <motion.div className="splash__corner splash__corner--tl"
-                initial={{ opacity: 0 }} animate={{ opacity: 0.4 }} transition={{ delay: 2.5, duration: 0.6 }} />
+                initial={{ opacity: 0 }} animate={{ opacity: 0.4 }} transition={{ delay: 0.3, duration: 0.6 }} />
             <motion.div className="splash__corner splash__corner--tr"
-                initial={{ opacity: 0 }} animate={{ opacity: 0.4 }} transition={{ delay: 2.6, duration: 0.6 }} />
+                initial={{ opacity: 0 }} animate={{ opacity: 0.4 }} transition={{ delay: 0.4, duration: 0.6 }} />
             <motion.div className="splash__corner splash__corner--bl"
-                initial={{ opacity: 0 }} animate={{ opacity: 0.4 }} transition={{ delay: 2.7, duration: 0.6 }} />
+                initial={{ opacity: 0 }} animate={{ opacity: 0.4 }} transition={{ delay: 0.5, duration: 0.6 }} />
             <motion.div className="splash__corner splash__corner--br"
-                initial={{ opacity: 0 }} animate={{ opacity: 0.4 }} transition={{ delay: 2.8, duration: 0.6 }} />
+                initial={{ opacity: 0 }} animate={{ opacity: 0.4 }} transition={{ delay: 0.6, duration: 0.6 }} />
 
             {/* Corner labels */}
             {['SYS.BOOT', 'PROTO.V1', 'CIPHER.INIT', 'NULL.TRACE'].map((text, i) => (
                 <motion.span key={text}
                     className={`splash__meta splash__meta--${['tl', 'tr', 'bl', 'br'][i]}`}
-                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2.8 + i * 0.1, duration: 0.5 }}
+                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 + i * 0.1, duration: 0.5 }}
                 >{text}</motion.span>
             ))}
 

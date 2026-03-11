@@ -23,6 +23,13 @@ export const httpServer = createServer((req, res) => {
         return;
     }
 
+    // ── Favicon (prevent 503 on backend-only deploy) ──
+    if (req.url === '/favicon.ico') {
+        res.writeHead(204, CORS_HEADERS);
+        res.end();
+        return;
+    }
+
     // ── Health Check ──
     if (req.url === '/health' && req.method === 'GET') {
         const uptime = process.uptime();
