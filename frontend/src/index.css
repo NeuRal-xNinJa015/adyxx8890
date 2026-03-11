@@ -1,4 +1,4 @@
-﻿/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    ADYX â€” Premium Design System
    Black & White. Minimalistic. Butter Smooth. Uncompromising.
    â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
@@ -2233,8 +2233,8 @@ body::after {
 }
 
 .ax__banner--error {
-  background: rgba(248, 81, 73, 0.1);
-  border-bottom: 1px solid rgba(248, 81, 73, 0.3);
+  background: rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   color: var(--gh-red);
 }
 
@@ -2310,14 +2310,14 @@ body::after {
 }
 
 .ax__label--green {
-  background: rgba(63, 185, 80, 0.1);
-  border-color: rgba(63, 185, 80, 0.3);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.15);
   color: var(--gh-green);
 }
 
 .ax__label--yellow {
-  background: rgba(210, 153, 34, 0.1);
-  border-color: rgba(210, 153, 34, 0.3);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.1);
   color: var(--gh-yellow);
   animation: gh-pulse 2.5s ease-in-out infinite;
 }
@@ -2416,9 +2416,9 @@ body::after {
 }
 
 .ax__btn--danger:hover {
-  background: rgba(248, 81, 73, 0.1);
-  border-color: rgba(248, 81, 73, 0.4);
-  color: var(--gh-red);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--gh-fg);
 }
 
 /* â•â•â• MESSAGES AREA â•â•â• */
@@ -2456,12 +2456,12 @@ body::after {
   width: 40px;
   height: 40px;
   border-radius: var(--gh-radius);
-  background: rgba(88, 166, 255, 0.1);
-  border: 1px solid rgba(88, 166, 255, 0.2);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--gh-blue);
+  color: var(--gh-fg);
   flex-shrink: 0;
 }
 
@@ -2529,20 +2529,20 @@ body::after {
 }
 
 .ax__sys--success {
-  background: rgba(63, 185, 80, 0.06);
-  border-color: rgba(63, 185, 80, 0.2);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.1);
   color: var(--gh-green);
 }
 
 .ax__sys--warn {
-  background: rgba(210, 153, 34, 0.06);
-  border-color: rgba(210, 153, 34, 0.2);
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
   color: var(--gh-yellow);
 }
 
 .ax__sys--error {
-  background: rgba(248, 81, 73, 0.06);
-  border-color: rgba(248, 81, 73, 0.2);
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
   color: var(--gh-red);
 }
 
@@ -2592,15 +2592,15 @@ body::after {
 }
 
 .ax__avatar--you {
-  background: rgba(88, 166, 255, 0.15);
-  color: var(--gh-blue);
-  border: 1px solid rgba(88, 166, 255, 0.3);
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--gh-fg);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .ax__avatar--peer {
-  background: rgba(63, 185, 80, 0.15);
-  color: var(--gh-green);
-  border: 1px solid rgba(63, 185, 80, 0.3);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--gh-fg-muted);
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .ax__avatar--sm {
@@ -2751,8 +2751,8 @@ body::after {
 }
 
 .ax__rxn--mine {
-  background: rgba(88, 166, 255, 0.08);
-  border-color: rgba(88, 166, 255, 0.3);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 /* â”€â”€ Hover Actions â”€â”€ */
@@ -2884,8 +2884,8 @@ body::after {
 }
 
 .ax__flash--warn {
-  background: rgba(210, 153, 34, 0.06);
-  border-color: rgba(210, 153, 34, 0.2);
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
   color: var(--gh-yellow);
 }
 
@@ -2953,8 +2953,8 @@ body::after {
 }
 
 .ax__composer--focus {
-  border-color: var(--gh-blue);
-  box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.05);
 }
 
 .ax__input {
@@ -3000,12 +3000,12 @@ body::after {
 }
 
 .ax__send-btn--ready {
-  background: var(--gh-green);
-  color: #ffffff;
+  background: #ffffff;
+  color: #000000;
 }
 
 .ax__send-btn--ready:hover {
-  background: #2ea043;
+  background: #e0e0e0;
 }
 
 /* â”€â”€ Footer Meta â”€â”€ */
