@@ -1,12 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Send, Shield, Lock, Zap, WifiOff, CornerUpLeft, X, LogOut, User, Hash } from 'lucide-react'
+import { Send, Shield, Lock, Zap, WifiOff, CornerUpLeft, X, LogOut, Hash, Globe, Eye, EyeOff, Clock, CheckCheck, Check, MessageSquare } from 'lucide-react'
 import * as ws from '../lib/ws'
 import FileUploadButton from './FileUploadButton.jsx'
 import VoiceRecordButton from './VoiceRecordButton.jsx'
 import MediaMessage from './MediaMessage.jsx'
 
-// ── Reactions ──
 const REACTIONS = [
     { symbol: '👍', label: 'thumbs up' },
     { symbol: '❤️', label: 'love' },
@@ -28,6 +27,7 @@ export default function ChatScreen({ roomCode, isCreator, onEndSession }) {
     const [activeReactionId, setActiveReactionId] = useState(null)
     const [peerLastSeen, setPeerLastSeen] = useState(null)
     const [unreadCount, setUnreadCount] = useState(0)
+    const [inputFocused, setInputFocused] = useState(false)
     const messagesEndRef = useRef(null)
     const inputRef = useRef(null)
     const typingTimeoutRef = useRef(null)
@@ -40,16 +40,16 @@ export default function ChatScreen({ roomCode, isCreator, onEndSession }) {
     const pendingReadIdsRef = useRef(new Set())
     const MAX_MESSAGES = 500
 
-    const addSystemMessage = useCallback((text) => {
+    const addSystemMessage = useCallback((text, variant = 'info') => {
         setMessages(prev => [...prev, {
             id: Date.now() + Math.random(),
             type: 'system',
             text,
+            variant,
             time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
         }])
     }, [])
 
-    // Close reaction picker on outside click
     useEffect(() => {
         if (activeReactionId === null) return
         const handleClickOutside = (e) => {
@@ -57,18 +57,12 @@ export default function ChatScreen({ roomCode, isCreator, onEndSession }) {
                 setActiveReactionId(null)
             }
         }
-        const timer = setTimeout(() => {
-            document.addEventListener('mousedown', handleClickOutside)
-        }, 100)
-        return () => {
-            clearTimeout(timer)
-            document.removeEventListener('mousedown', handleClickOutside)
-        }
+        const timer = setTimeout(() => document.addEventListener('mousedown', handleClickOutside), 100)
+        return () => { clearTimeout(timer); document.removeEventListener('mousedown', handleClickOutside) }
     }, [activeReactionId])
 
-    // WebSocket listeners
     useEffect(() => {
-        addSystemMessage('Secure session established')
+        addSystemMessage('Secure tunnel established', 'success')
 
         const offMessage = ws.on('message', (msg) => {
             setMessages(prev => [...prev, {
@@ -76,7 +70,7 @@ export default function ChatScreen({ roomCode, isCreator, onEndSession }) {
                 messageId: msg.messageId,
                 type: 'received',
                 text: msg.payload,
-                sender: msg.deviceId?.slice(0, 8) || 'Peer',
+                sender: msg.deviceId?.slice(0, 8) || 'Anon',
                 encrypted: msg.encrypted || false,
                 time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
                 replyTo: msg.replyTo || null,
@@ -85,7 +79,6 @@ export default function ChatScreen({ roomCode, isCreator, onEndSession }) {
             }])
             setPeerTyping(false)
             setPeerLastSeen(Date.now())
-
             if (document.hidden) {
                 setUnreadCount(prev => prev + 1)
                 try {
@@ -94,19 +87,14 @@ export default function ChatScreen({ roomCode, isCreator, onEndSession }) {
                     }
                 } catch { }
                 try {
-                    if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
-                        audioCtxRef.current = new AudioContext()
-                    }
+                    if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') audioCtxRef.current = new AudioContext()
                     const ctx = audioCtxRef.current
                     if (ctx.state === 'suspended') ctx.resume()
                     const osc = ctx.createOscillator()
                     const gain = ctx.createGain()
-                    osc.connect(gain)
-                    gain.connect(ctx.destination)
-                    osc.frequency.value = 800
-                    gain.gain.value = 0.1
-                    osc.start()
-                    osc.stop(ctx.currentTime + 0.08)
+                    osc.connect(gain); gain.connect(ctx.destination)
+                    osc.frequency.value = 800; gain.gain.value = 0.1
+                    osc.start(); osc.stop(ctx.currentTime + 0.08)
                 } catch { }
             }
         })
@@ -117,35 +105,29 @@ export default function ChatScreen({ roomCode, isCreator, onEndSession }) {
 
         const offAck = ws.on('ack', (msg) => {
             if (msg.status === 'delivered') {
-                setMessages(prev => prev.map(m =>
-                    m.messageId === msg.messageId ? { ...m, delivered: true } : m
-                ))
+                setMessages(prev => prev.map(m => m.messageId === msg.messageId ? { ...m, delivered: true } : m))
             }
         })
 
         const offPeerLeft = ws.on('peer_left', () => {
-            setPeerConnected(false)
-            setPeerTyping(false)
-            addSystemMessage('Peer disconnected')
+            setPeerConnected(false); setPeerTyping(false)
+            addSystemMessage('Peer disconnected from the tunnel', 'warn')
         })
 
         const offDisconnected = ws.on('disconnected', () => {
             setWsConnected(false)
-            addSystemMessage('Connection lost — reconnecting...')
+            addSystemMessage('Connection lost — reconnecting...', 'error')
         })
 
-        const offConnected = ws.on('connected', () => {
-            setWsConnected(true)
-        })
+        const offConnected = ws.on('connected', () => setWsConnected(true))
 
         const offEncReady = ws.on('encryption_ready', () => {
             setEncrypted(true)
-            addSystemMessage('End-to-end encryption activated')
+            addSystemMessage('End-to-end encryption active — AES-256-GCM', 'success')
         })
 
         const offTyping = ws.on('typing', () => {
-            setPeerTyping(true)
-            setPeerLastSeen(Date.now())
+            setPeerTyping(true); setPeerLastSeen(Date.now())
             if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
             typingTimeoutRef.current = setTimeout(() => setPeerTyping(false), 3000)
         })
@@ -155,9 +137,7 @@ export default function ChatScreen({ roomCode, isCreator, onEndSession }) {
                 if (m.messageId === msg.messageId) {
                     const existing = m.reactions || []
                     const alreadyIdx = existing.findIndex(r => r.from === msg.from && r.symbol === msg.reaction)
-                    if (alreadyIdx !== -1) {
-                        return { ...m, reactions: existing.filter((_, i) => i !== alreadyIdx) }
-                    }
+                    if (alreadyIdx !== -1) return { ...m, reactions: existing.filter((_, i) => i !== alreadyIdx) }
                     return { ...m, reactions: [...existing, { symbol: msg.reaction, from: msg.from }] }
                 }
                 return m
@@ -168,47 +148,35 @@ export default function ChatScreen({ roomCode, isCreator, onEndSession }) {
             if (!msg.payload) return
             try {
                 const parsed = typeof msg.payload === 'string' ? JSON.parse(msg.payload) : null
-                if (parsed && parsed.type === 'file_key') {
-                    fileKeysRef.current.set(parsed.fileId, parsed.keyBase64)
-                }
+                if (parsed && parsed.type === 'file_key') fileKeysRef.current.set(parsed.fileId, parsed.keyBase64)
             } catch (_) { }
         })
 
         const offFileReady = ws.on('file_ready', async (msg) => {
-            addSystemMessage('Encrypted file received')
+            addSystemMessage('Encrypted file received', 'info')
             try {
                 const chunks = await ws.requestFile(msg.fileId, roomCode, msg.totalChunks)
                 const keyBase64 = fileKeysRef.current.get(msg.fileId)
                 setMessages(prev => [...prev, {
-                    id: Date.now() + Math.random(),
-                    type: 'received',
-                    isFile: true,
+                    id: Date.now() + Math.random(), type: 'received', isFile: true,
                     fileData: {
                         fileId: msg.fileId, chunks, totalChunks: msg.totalChunks,
                         iv: msg.iv, hash: msg.hash, keyBase64: keyBase64 || '',
                         encryptedMetadata: msg.encryptedMetadata, thumbnail: msg.thumbnail,
                         ephemeral: msg.ephemeral, displayCategory: msg.displayCategory,
                     },
-                    sender: msg.deviceId?.slice(0, 8) || 'Peer',
-                    encrypted: true,
+                    sender: msg.deviceId?.slice(0, 8) || 'Anon', encrypted: true,
                     time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
                     reactions: []
                 }])
-            } catch (err) {
-                console.error('[Chat] File download failed:', err)
-            }
+            } catch (err) { console.error('[Chat] File download failed:', err) }
         })
 
         const offFileDeleted = ws.on('file_deleted', () => { })
 
         const offReadReceipt = ws.on('read_receipt', (msg) => {
             if (Array.isArray(msg.messageIds)) {
-                setMessages(prev => prev.map(m => {
-                    if (m.type === 'sent' && msg.messageIds.includes(m.messageId)) {
-                        return { ...m, read: true }
-                    }
-                    return m
-                }))
+                setMessages(prev => prev.map(m => (m.type === 'sent' && msg.messageIds.includes(m.messageId)) ? { ...m, read: true } : m))
             }
         })
 
@@ -219,43 +187,22 @@ export default function ChatScreen({ roomCode, isCreator, onEndSession }) {
         }
     }, [roomCode, isCreator, addSystemMessage])
 
-    // Timer
-    useEffect(() => {
-        const t = setInterval(() => setElapsed(prev => prev + 1), 1000)
-        return () => clearInterval(t)
-    }, [])
+    useEffect(() => { const t = setInterval(() => setElapsed(prev => prev + 1), 1000); return () => clearInterval(t) }, [])
+    useEffect(() => { return () => { if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') audioCtxRef.current.close().catch(() => { }); if (readReceiptTimerRef.current) clearTimeout(readReceiptTimerRef.current) } }, [])
+    useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages, peerTyping])
+    useEffect(() => { inputRef.current?.focus() }, [])
 
-    // Cleanup shared AudioContext on unmount
-    useEffect(() => {
-        return () => {
-            if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
-                audioCtxRef.current.close().catch(() => { })
-            }
-            if (readReceiptTimerRef.current) clearTimeout(readReceiptTimerRef.current)
-        }
-    }, [])
-
-    // Auto-scroll
-    useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-    }, [messages, peerTyping])
-
-    // Read receipts
     const flushReadReceipts = useCallback(() => {
         const ids = Array.from(pendingReadIdsRef.current)
         if (ids.length === 0) return
         pendingReadIdsRef.current.clear()
         ws.sendReadReceipt(ids, roomCode)
-        setMessages(prev => prev.map(m =>
-            ids.includes(m.messageId) ? { ...m, readSent: true } : m
-        ))
+        setMessages(prev => prev.map(m => ids.includes(m.messageId) ? { ...m, readSent: true } : m))
     }, [roomCode])
 
     useEffect(() => {
         if (document.hidden) return
-        const unreadIds = messages
-            .filter(m => m.type === 'received' && m.messageId && !m.readSent)
-            .map(m => m.messageId)
+        const unreadIds = messages.filter(m => m.type === 'received' && m.messageId && !m.readSent).map(m => m.messageId)
         if (unreadIds.length === 0) return
         unreadIds.forEach(id => pendingReadIdsRef.current.add(id))
         if (readReceiptTimerRef.current) clearTimeout(readReceiptTimerRef.current)
@@ -263,434 +210,297 @@ export default function ChatScreen({ roomCode, isCreator, onEndSession }) {
     }, [messages, flushReadReceipts])
 
     useEffect(() => {
-        const handleVisibility = () => {
-            if (!document.hidden) {
-                const unreadIds = messages
-                    .filter(m => m.type === 'received' && m.messageId && !m.readSent)
-                    .map(m => m.messageId)
-                if (unreadIds.length > 0) {
-                    unreadIds.forEach(id => pendingReadIdsRef.current.add(id))
-                    flushReadReceipts()
-                }
-            }
-        }
-        document.addEventListener('visibilitychange', handleVisibility)
-        return () => document.removeEventListener('visibilitychange', handleVisibility)
+        const h = () => { if (!document.hidden) { const ids = messages.filter(m => m.type === 'received' && m.messageId && !m.readSent).map(m => m.messageId); if (ids.length > 0) { ids.forEach(id => pendingReadIdsRef.current.add(id)); flushReadReceipts() } } }
+        document.addEventListener('visibilitychange', h); return () => document.removeEventListener('visibilitychange', h)
     }, [messages, flushReadReceipts])
 
-    // Title bar unread badge
-    useEffect(() => {
-        if (unreadCount > 0) {
-            document.title = `(${unreadCount}) ADYX`
-        } else {
-            document.title = 'ADYX'
-        }
-        return () => { document.title = 'ADYX \u2014 Anonymous Communication' }
-    }, [unreadCount])
+    useEffect(() => { document.title = unreadCount > 0 ? `(${unreadCount}) ADYX` : 'ADYX'; return () => { document.title = 'ADYX \u2014 Anonymous Communication' } }, [unreadCount])
+    useEffect(() => { const h = () => setUnreadCount(0); window.addEventListener('focus', h); return () => window.removeEventListener('focus', h) }, [])
+    useEffect(() => { if (!('Notification' in window)) return; if (Notification.permission === 'default') Notification.requestPermission() }, [])
 
-    // Clear unread on focus
-    useEffect(() => {
-        const handleFocus = () => setUnreadCount(0)
-        window.addEventListener('focus', handleFocus)
-        return () => window.removeEventListener('focus', handleFocus)
-    }, [])
-
-    // Focus input
-    useEffect(() => { inputRef.current?.focus() }, [])
-
-    // Browser notifications
-    useEffect(() => {
-        if (!('Notification' in window)) return
-        if (Notification.permission === 'default') {
-            Notification.requestPermission()
-        }
-    }, [])
-
-    // ── Handlers ──
     const handleSend = async () => {
         const text = input.trim()
         if (!text || sendingRef.current) return
         sendingRef.current = true
-
         const msgId = crypto.randomUUID().split('-')[0]
-        const replyData = replyTo ? { id: replyTo.messageId || replyTo.id, text: replyTo.text?.slice(0, 80), sender: replyTo.sender || (replyTo.type === 'sent' ? 'You' : 'Peer') } : null
-
+        const replyData = replyTo ? { id: replyTo.messageId || replyTo.id, text: replyTo.text?.slice(0, 80), sender: replyTo.sender || (replyTo.type === 'sent' ? 'You' : 'Anon') } : null
         setMessages(prev => {
-            const next = [...prev, {
-                id: Date.now() + Math.random(),
-                messageId: msgId,
-                type: 'sent',
-                text,
-                delivered: false,
-                time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
-                replyTo: replyData,
-                reactions: [],
-                createdAt: Date.now(),
-            }]
+            const next = [...prev, { id: Date.now() + Math.random(), messageId: msgId, type: 'sent', text, delivered: false, time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }), replyTo: replyData, reactions: [], createdAt: Date.now() }]
             return next.length > MAX_MESSAGES ? next.slice(next.length - MAX_MESSAGES) : next
         })
-        setInput('')
-        setReplyTo(null)
-
-        try {
-            await ws.sendMessage(text, roomCode, msgId)
-        } catch (err) {
-            console.error('[Chat] Send failed:', err)
-        } finally {
-            sendingRef.current = false
-        }
+        setInput(''); setReplyTo(null)
+        try { await ws.sendMessage(text, roomCode, msgId) } catch (err) { console.error('[Chat] Send failed:', err) } finally { sendingRef.current = false }
     }
 
     const handleFileReady = useCallback(async (fileData) => {
         try {
             fileKeysRef.current.set(fileData.fileId, fileData.keyBase64)
-            setMessages(prev => [...prev, {
-                id: Date.now() + Math.random(),
-                type: 'sent',
-                isFile: true,
-                fileData,
-                delivered: false,
-                time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
-                reactions: []
-            }])
+            setMessages(prev => [...prev, { id: Date.now() + Math.random(), type: 'sent', isFile: true, fileData, delivered: false, time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }), reactions: [] }])
             await ws.sendFile(fileData, roomCode)
-            setMessages(prev => prev.map(m =>
-                m.fileData?.fileId === fileData.fileId ? { ...m, delivered: true } : m
-            ))
-        } catch (err) {
-            console.error('[Chat] File send failed:', err)
-        }
+            setMessages(prev => prev.map(m => m.fileData?.fileId === fileData.fileId ? { ...m, delivered: true } : m))
+        } catch (err) { console.error('[Chat] File send failed:', err) }
     }, [roomCode])
 
-    const handleKeyDown = (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault()
-            handleSend()
-        }
-        if (e.key === 'Escape' && replyTo) {
-            setReplyTo(null)
-        }
-    }
-
-    const handleInputChange = (e) => {
-        setInput(e.target.value)
-        const now = Date.now()
-        if (now - lastTypingSentRef.current > 2000) {
-            ws.sendTyping(roomCode)
-            lastTypingSentRef.current = now
-        }
-    }
+    const handleKeyDown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() }; if (e.key === 'Escape' && replyTo) setReplyTo(null) }
+    const handleInputChange = (e) => { setInput(e.target.value); const now = Date.now(); if (now - lastTypingSentRef.current > 2000) { ws.sendTyping(roomCode); lastTypingSentRef.current = now } }
 
     const handleReaction = (msg, symbol) => {
-        const msgId = msg.messageId
-        if (!msgId) return
+        const msgId = msg.messageId; if (!msgId) return
         setMessages(prev => prev.map(m => {
-            if (m.messageId === msgId) {
-                const existing = m.reactions || []
-                const alreadyIdx = existing.findIndex(r => r.from === 'me' && r.symbol === symbol)
-                if (alreadyIdx !== -1) {
-                    return { ...m, reactions: existing.filter((_, i) => i !== alreadyIdx) }
-                }
-                return { ...m, reactions: [...existing, { symbol, from: 'me' }] }
-            }
+            if (m.messageId === msgId) { const existing = m.reactions || []; const idx = existing.findIndex(r => r.from === 'me' && r.symbol === symbol); if (idx !== -1) return { ...m, reactions: existing.filter((_, i) => i !== idx) }; return { ...m, reactions: [...existing, { symbol, from: 'me' }] } }
             return m
         }))
-        ws.sendReaction(msgId, symbol, roomCode)
-        setActiveReactionId(null)
+        ws.sendReaction(msgId, symbol, roomCode); setActiveReactionId(null)
     }
 
-    const handleReply = (msg) => {
-        setReplyTo(msg)
-        setActiveReactionId(null)
-        inputRef.current?.focus()
-    }
+    const handleReply = (msg) => { setReplyTo(msg); setActiveReactionId(null); inputRef.current?.focus() }
 
     const linkifyText = (text) => {
-        const urlRegex = /(https?:\/\/[^\s]+)/g
-        const parts = text.split(urlRegex)
-        const urls = text.match(urlRegex) || []
-        const urlSet = new Set(urls)
-        return parts.map((part, i) => {
-            if (urlSet.has(part)) {
-                return <a key={`link-${i}`} href={part} target="_blank" rel="noopener noreferrer" className="dc-msg__link">{part}</a>
-            }
-            return part
-        })
+        const urlRegex = /(https?:\/\/[^\s]+)/g; const parts = text.split(urlRegex); const urls = text.match(urlRegex) || []; const urlSet = new Set(urls)
+        return parts.map((part, i) => urlSet.has(part) ? <a key={`l-${i}`} href={part} target="_blank" rel="noopener noreferrer" className="ax__link">{part}</a> : part)
     }
 
-    const formatElapsed = (s) => {
-        const h = Math.floor(s / 3600)
-        const m = Math.floor((s % 3600) / 60)
-        const sec = s % 60
-        if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`
-        return `${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`
-    }
+    const formatElapsed = (s) => { const h = Math.floor(s / 3600); const m = Math.floor((s % 3600) / 60); const sec = s % 60; return h > 0 ? `${h}:${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}` : `${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}` }
+    const shouldGroup = (msg, prevMsg) => { if (!prevMsg) return false; if (msg.type !== prevMsg.type) return false; if (msg.type === 'system') return false; return msg.time === prevMsg.time }
+    const groupReactions = (reactions) => { if (!reactions || reactions.length === 0) return []; const map = {}; reactions.forEach(r => { if (!map[r.symbol]) map[r.symbol] = { symbol: r.symbol, count: 0, mine: false }; map[r.symbol].count++; if (r.from === 'me') map[r.symbol].mine = true }); return Object.values(map) }
 
-    const shouldGroup = (msg, prevMsg) => {
-        if (!prevMsg) return false
-        if (msg.type !== prevMsg.type) return false
-        if (msg.type === 'system') return false
-        return msg.time === prevMsg.time
-    }
+    const peerStatus = !peerConnected ? 'offline' : peerTyping ? 'typing' : 'online'
 
-    const groupReactions = (reactions) => {
-        if (!reactions || reactions.length === 0) return []
-        const map = {}
-        reactions.forEach(r => {
-            if (!map[r.symbol]) map[r.symbol] = { symbol: r.symbol, count: 0, mine: false }
-            map[r.symbol].count++
-            if (r.from === 'me') map[r.symbol].mine = true
-        })
-        return Object.values(map)
-    }
-
-    // ── Render ──
     return (
-        <motion.div
-            className="dc"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-        >
-            {/* Connection lost banner */}
+        <motion.div className="ax" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
+
+            {/* ── Connection Banner ── */}
             <AnimatePresence>
                 {!wsConnected && (
-                    <motion.div
-                        className="dc__banner"
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                    >
-                        <WifiOff size={12} /> Connection lost — attempting to reconnect...
+                    <motion.div className="ax__banner ax__banner--error" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}>
+                        <WifiOff size={14} /> <span>Connection lost — attempting to reconnect...</span>
                     </motion.div>
                 )}
             </AnimatePresence>
 
-            {/* ── Discord-style Header ── */}
-            <div className="dc__header">
-                <div className="dc__header-left">
-                    <Hash size={18} className="dc__hash" />
-                    <span className="dc__channel-name">{roomCode.toUpperCase()}</span>
-                    <div className="dc__header-divider" />
-                    <span className="dc__header-badge dc__header-badge--lock">
-                        <Lock size={10} /> E2E
-                    </span>
-                    <span className={`dc__header-badge ${encrypted ? 'dc__header-badge--active' : 'dc__header-badge--pending'}`}>
-                        <Zap size={10} /> {encrypted ? 'AES-256' : 'HANDSHAKE'}
-                    </span>
-                </div>
-                <div className="dc__header-right">
-                    {/* Live Status Indicator */}
-                    <div className={`dc__live-indicator ${peerConnected ? (peerTyping ? 'dc__live-indicator--typing' : 'dc__live-indicator--live') : 'dc__live-indicator--offline'}`}>
-                        <span className="dc__live-dot">
-                            <span className="dc__live-dot-core" />
-                            {peerConnected && <span className="dc__live-dot-ring" />}
+            {/* ── Header — GitHub-style top bar ── */}
+            <header className="ax__header">
+                <div className="ax__header-left">
+                    <div className="ax__channel">
+                        <MessageSquare size={16} className="ax__channel-ico" />
+                        <span className="ax__channel-name">{roomCode.toUpperCase()}</span>
+                    </div>
+                    <div className="ax__header-divider" />
+                    <div className="ax__badges">
+                        <span className="ax__label ax__label--muted">
+                            <Lock size={11} /> E2E
                         </span>
-                        <span className="dc__live-label">
-                            {!peerConnected ? 'OFFLINE' : peerTyping ? 'TYPING' : 'LIVE'}
+                        <span className={`ax__label ${encrypted ? 'ax__label--green' : 'ax__label--yellow'}`}>
+                            <Zap size={11} /> {encrypted ? 'AES-256' : 'Handshake...'}
                         </span>
                     </div>
-                    <span className="dc__elapsed">{formatElapsed(elapsed)}</span>
-                    <button className="dc__end-btn" onClick={onEndSession}>
-                        <LogOut size={14} /> End
+                </div>
+                <div className="ax__header-right">
+                    <div className={`ax__presence ax__presence--${peerStatus}`}>
+                        <span className="ax__presence-dot" />
+                        <span className="ax__presence-text">
+                            {peerStatus === 'offline' ? 'Offline' : peerStatus === 'typing' ? 'Typing...' : 'Online'}
+                        </span>
+                    </div>
+                    <span className="ax__timer-badge">
+                        <Clock size={12} />
+                        {formatElapsed(elapsed)}
+                    </span>
+                    <button className="ax__btn ax__btn--danger" onClick={onEndSession} title="End Session">
+                        <LogOut size={14} />
+                        <span className="ax__btn-label">End</span>
                     </button>
                 </div>
-            </div>
+            </header>
 
-            {/* ── Messages Area ── */}
-            <div className="dc__messages">
-                {/* Welcome card */}
-                <div className="dc__welcome">
-                    <div className="dc__welcome-icon">
-                        <Hash size={36} />
+            {/* ── Messages ── */}
+            <main className="ax__messages" id="ax-messages">
+
+                {/* Welcome */}
+                <div className="ax__welcome-card">
+                    <div className="ax__welcome-header">
+                        <div className="ax__welcome-icon-wrap">
+                            <Shield size={20} />
+                        </div>
+                        <div>
+                            <h2 className="ax__welcome-title">#{roomCode.toUpperCase()}</h2>
+                            <p className="ax__welcome-sub">Encrypted ephemeral channel</p>
+                        </div>
                     </div>
-                    <h3 className="dc__welcome-title">Welcome to #{roomCode.toUpperCase()}</h3>
-                    <p className="dc__welcome-desc">
-                        This is an encrypted, ephemeral channel. Messages are end-to-end encrypted and never stored.
+                    <p className="ax__welcome-desc">
+                        Messages are end-to-end encrypted and will be permanently deleted when the session ends. No data is stored on our servers.
                     </p>
+                    <div className="ax__welcome-tags">
+                        <span className="ax__tag"><Lock size={10} /> Zero-knowledge</span>
+                        <span className="ax__tag"><Shield size={10} /> E2E encrypted</span>
+                        <span className="ax__tag"><Zap size={10} /> Ephemeral</span>
+                    </div>
                 </div>
 
                 {messages.map((msg, idx) => (
                     <div key={msg.id}>
                         {msg.type === 'system' ? (
-                            <div className="dc__system">
-                                <Shield size={12} />
-                                <span>{msg.text}</span>
-                                <span className="dc__system-time">{msg.time}</span>
-                            </div>
+                            <motion.div
+                                className={`ax__sys ax__sys--${msg.variant || 'info'}`}
+                                initial={{ opacity: 0, y: 4 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.2 }}
+                            >
+                                <div className="ax__sys-icon">
+                                    {msg.variant === 'success' ? <Check size={12} /> : msg.variant === 'warn' ? <Eye size={12} /> : msg.variant === 'error' ? <X size={12} /> : <Globe size={12} />}
+                                </div>
+                                <span className="ax__sys-text">{msg.text}</span>
+                                <span className="ax__sys-time">{msg.time}</span>
+                            </motion.div>
                         ) : (
-                            <div className={`dc__msg ${shouldGroup(msg, messages[idx - 1]) ? 'dc__msg--grouped' : ''}`}>
-                                {/* Avatar + Header (only on non-grouped) */}
+                            <motion.div
+                                className={`ax__msg ${shouldGroup(msg, messages[idx - 1]) ? 'ax__msg--grouped' : ''}`}
+                                initial={{ opacity: 0, y: 4 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.15 }}
+                            >
+                                {/* Avatar */}
                                 {!shouldGroup(msg, messages[idx - 1]) && (
-                                    <div className="dc__msg-header">
-                                        <div className={`dc__avatar ${msg.type === 'sent' ? 'dc__avatar--you' : 'dc__avatar--peer'}`}>
-                                            {msg.type === 'sent' ? 'Y' : 'P'}
-                                        </div>
-                                        <span className={`dc__msg-author ${msg.type === 'sent' ? 'dc__msg-author--you' : 'dc__msg-author--peer'}`}>
-                                            {msg.type === 'sent' ? 'You' : (msg.sender || 'Peer')}
-                                        </span>
-                                        <span className="dc__msg-timestamp">{msg.time}</span>
+                                    <div className={`ax__avatar ${msg.type === 'sent' ? 'ax__avatar--you' : 'ax__avatar--peer'}`}>
+                                        {msg.type === 'sent' ? 'Y' : 'P'}
                                     </div>
                                 )}
 
-                                {/* Content */}
-                                <div className="dc__msg-content">
-                                    {/* Reply quote */}
+                                <div className="ax__msg-body">
+                                    {/* Header */}
+                                    {!shouldGroup(msg, messages[idx - 1]) && (
+                                        <div className="ax__msg-head">
+                                            <span className={`ax__msg-author ${msg.type === 'sent' ? 'ax__msg-author--you' : ''}`}>
+                                                {msg.type === 'sent' ? 'You' : (msg.sender || 'Anon')}
+                                            </span>
+                                            <span className="ax__msg-ts">{msg.time}</span>
+                                            {msg.encrypted && <Lock size={10} className="ax__msg-enc" />}
+                                        </div>
+                                    )}
+
+                                    {/* Reply */}
                                     {msg.replyTo && (
-                                        <div className="dc__reply-quote">
-                                            <div className="dc__reply-bar" />
-                                            <div className="dc__reply-body">
-                                                <span className="dc__reply-author">{msg.replyTo.sender || 'Unknown'}</span>
-                                                <span className="dc__reply-text">{msg.replyTo.text || '[file]'}</span>
+                                        <div className="ax__reply-quote">
+                                            <div className="ax__reply-bar" />
+                                            <div className="ax__reply-content">
+                                                <span className="ax__reply-who">{msg.replyTo.sender || '?'}</span>
+                                                <span className="ax__reply-what">{msg.replyTo.text || '[file]'}</span>
                                             </div>
                                         </div>
                                     )}
 
+                                    {/* Content */}
                                     {msg.isFile ? (
-                                        <MediaMessage
-                                            fileData={msg.fileData}
-                                            isSent={msg.type === 'sent'}
-                                            sessionId={ws.getStatus().deviceId}
-                                            deviceHash=""
-                                        />
+                                        <MediaMessage fileData={msg.fileData} isSent={msg.type === 'sent'} sessionId={ws.getStatus().deviceId} deviceHash="" />
                                     ) : (
-                                        <div className="dc__msg-text">{linkifyText(msg.text)}</div>
+                                        <div className="ax__msg-text">{linkifyText(msg.text)}</div>
                                     )}
 
-                                    {/* Delivery status */}
+                                    {/* Delivery */}
                                     {msg.type === 'sent' && (
-                                        <span className={`dc__delivery ${msg.read ? 'dc__delivery--read' : ''}`}>
-                                            {msg.read ? '✓✓' : msg.delivered ? '✓✓' : '✓'}
+                                        <span className={`ax__delivery ${msg.read ? 'ax__delivery--read' : msg.delivered ? 'ax__delivery--ok' : ''}`}>
+                                            {msg.read ? <><CheckCheck size={13} /> Read</> : msg.delivered ? <><CheckCheck size={13} /> Delivered</> : <><Check size={13} /> Sent</>}
                                         </span>
                                     )}
+
+                                    {/* Reactions */}
+                                    {msg.reactions && msg.reactions.length > 0 && (
+                                        <div className="ax__reactions">
+                                            {groupReactions(msg.reactions).map(r => (
+                                                <button key={r.symbol} className={`ax__rxn ${r.mine ? 'ax__rxn--mine' : ''}`} onClick={() => handleReaction(msg, r.symbol)}>
+                                                    {r.symbol}{r.count > 1 && <span className="ax__rxn-count">{r.count}</span>}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
 
-                                {/* Reactions */}
-                                {msg.reactions && msg.reactions.length > 0 && (
-                                    <div className="dc__reactions">
-                                        {groupReactions(msg.reactions).map(r => (
-                                            <button
-                                                key={r.symbol}
-                                                className={`dc__reaction ${r.mine ? 'dc__reaction--mine' : ''}`}
-                                                onClick={() => handleReaction(msg, r.symbol)}
-                                            >
-                                                {r.symbol}{r.count > 1 ? ` ${r.count}` : ''}
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
-
-                                {/* Hover actions */}
-                                <div className="dc__msg-actions">
-                                    <button className="dc__action-btn" onClick={(e) => { e.stopPropagation(); setActiveReactionId(activeReactionId === msg.id ? null : msg.id) }} title="React">😊</button>
-                                    <button className="dc__action-btn" onClick={() => handleReply(msg)} title="Reply">
-                                        <CornerUpLeft size={14} />
-                                    </button>
+                                {/* Hover Actions */}
+                                <div className="ax__actions">
+                                    <button onClick={(e) => { e.stopPropagation(); setActiveReactionId(activeReactionId === msg.id ? null : msg.id) }} title="Add reaction">😊</button>
+                                    <button onClick={() => handleReply(msg)} title="Reply"><CornerUpLeft size={14} /></button>
                                 </div>
 
-                                {/* Reaction picker */}
+                                {/* Reaction Picker */}
                                 <AnimatePresence>
                                     {activeReactionId === msg.id && (
-                                        <motion.div
-                                            className="dc__reaction-picker"
-                                            ref={reactionPickerRef}
-                                            initial={{ opacity: 0, scale: 0.9, y: 5 }}
-                                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                                            exit={{ opacity: 0, scale: 0.9, y: 5 }}
-                                            transition={{ duration: 0.12 }}
-                                        >
+                                        <motion.div className="ax__picker" ref={reactionPickerRef} initial={{ opacity: 0, scale: 0.9, y: 6 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 6 }} transition={{ duration: 0.12 }}>
                                             {REACTIONS.map(r => (
-                                                <button key={r.symbol} className="dc__reaction-opt" onClick={() => handleReaction(msg, r.symbol)} title={r.label}>
-                                                    {r.symbol}
-                                                </button>
+                                                <button key={r.symbol} onClick={() => handleReaction(msg, r.symbol)} title={r.label}>{r.symbol}</button>
                                             ))}
                                         </motion.div>
                                     )}
                                 </AnimatePresence>
-                            </div>
+                            </motion.div>
                         )}
                     </div>
                 ))}
 
-                {/* Typing indicator */}
+                {/* Typing */}
                 <AnimatePresence>
                     {peerTyping && (
-                        <motion.div
-                            className="dc__typing"
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                        >
-                            <div className="dc__avatar dc__avatar--peer dc__avatar--sm">P</div>
-                            <span className="dc__typing-dots">
+                        <motion.div className="ax__typing" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.15 }}>
+                            <div className="ax__avatar ax__avatar--peer ax__avatar--sm">P</div>
+                            <div className="ax__typing-dots">
                                 <span /><span /><span />
-                            </span>
+                            </div>
                         </motion.div>
                     )}
                 </AnimatePresence>
                 <div ref={messagesEndRef} />
-            </div>
+            </main>
 
-            {/* ── Input Area ── */}
-            <div className="dc__input-area">
+            {/* ── Input ── */}
+            <footer className="ax__footer">
                 {!peerConnected && (
-                    <div className="dc__input-warn">
-                        Peer disconnected — messages won't be delivered
+                    <div className="ax__flash ax__flash--warn">
+                        <EyeOff size={13} />
+                        Peer is offline — messages won't be delivered
                     </div>
                 )}
 
-                {/* Reply bar */}
                 <AnimatePresence>
                     {replyTo && (
-                        <motion.div
-                            className="dc__reply-bar-input"
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.15 }}
-                        >
-                            <CornerUpLeft size={12} />
-                            <span className="dc__reply-input-author">
-                                {replyTo.type === 'sent' ? 'You' : (replyTo.sender || 'Peer')}
-                            </span>
-                            <span className="dc__reply-input-text">
-                                {replyTo.isFile ? '[File]' : (replyTo.text?.slice(0, 60) || '...')}
-                            </span>
-                            <button className="dc__reply-close" onClick={() => setReplyTo(null)}>
-                                <X size={14} />
-                            </button>
+                        <motion.div className="ax__reply-strip" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.12 }}>
+                            <CornerUpLeft size={13} className="ax__reply-strip-ico" />
+                            <span className="ax__reply-strip-who">{replyTo.type === 'sent' ? 'You' : (replyTo.sender || 'Anon')}</span>
+                            <span className="ax__reply-strip-what">{replyTo.isFile ? '[File]' : (replyTo.text?.slice(0, 60) || '...')}</span>
+                            <button className="ax__reply-strip-x" onClick={() => setReplyTo(null)}><X size={14} /></button>
                         </motion.div>
                     )}
                 </AnimatePresence>
 
-                <div className="dc__input-row">
+                <div className={`ax__composer ${inputFocused ? 'ax__composer--focus' : ''}`}>
                     <FileUploadButton onFileReady={handleFileReady} disabled={!peerConnected} roomCode={roomCode} />
                     <input
                         ref={inputRef}
+                        className="ax__input"
                         type="text"
-                        className="dc__input"
-                        placeholder={peerConnected ? `Message #${roomCode.toUpperCase()}` : 'Peer disconnected'}
+                        placeholder={peerConnected ? `Message #${roomCode.toUpperCase()}...` : 'Peer is offline...'}
                         value={input}
                         onChange={handleInputChange}
                         onKeyDown={handleKeyDown}
+                        onFocus={() => setInputFocused(true)}
+                        onBlur={() => setInputFocused(false)}
                         disabled={!peerConnected}
                         autoComplete="off"
                     />
                     <VoiceRecordButton onFileReady={handleFileReady} disabled={!peerConnected} roomCode={roomCode} />
-                    <button
-                        className={`dc__send ${input.trim() && peerConnected ? 'dc__send--active' : ''}`}
+                    <motion.button
+                        className={`ax__send-btn ${input.trim() && peerConnected ? 'ax__send-btn--ready' : ''}`}
                         onClick={handleSend}
                         disabled={!input.trim() || !peerConnected}
+                        whileTap={{ scale: 0.92 }}
                     >
-                        <Send size={18} />
-                    </button>
+                        <Send size={16} />
+                    </motion.button>
                 </div>
-                <div className="dc__input-hint">
-                    <Lock size={8} /> {encrypted ? 'AES-256-GCM ENCRYPTED' : 'ENCRYPTING...'}
+
+                <div className="ax__footer-meta">
+                    <Lock size={9} />
+                    <span>{encrypted ? 'End-to-end encrypted · AES-256-GCM' : 'Establishing encryption...'}</span>
                 </div>
-            </div>
+            </footer>
         </motion.div>
     )
 }
