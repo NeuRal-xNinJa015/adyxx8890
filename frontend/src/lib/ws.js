@@ -206,6 +206,12 @@ export function connect() {
         setTimeout(() => {
             if (!isConnected) {
                 connectingPromise = null
+                // Close zombie socket to prevent duplicate connections
+                if (socket) {
+                    socket.onclose = null
+                    socket.close()
+                    socket = null
+                }
                 reject(new Error('Connection timeout'))
             }
         }, 5000)
@@ -406,18 +412,32 @@ export async function sendFile(fileData, roomCode) {
         throw err
     }
 
-    // 2. Initiate upload
-    send({
-        type: 'file_upload',
-        fileId,
-        roomCode,
-        totalChunks,
-        iv,
-        hash,
-        encryptedMetadata,
-        thumbnail,
-        ephemeral,
-        displayCategory,
+    // 2. Initiate upload and wait for server ACK before sending chunks
+    await new Promise((resolve, reject) => {
+        const offAck = on('file_upload_ack', (ack) => {
+            if (ack.fileId === fileId) {
+                clearTimeout(ackTimeout)
+                offAck()
+                resolve()
+            }
+        })
+        const ackTimeout = setTimeout(() => {
+            offAck()
+            reject(new Error('File upload ACK timed out'))
+        }, 10000)
+
+        send({
+            type: 'file_upload',
+            fileId,
+            roomCode,
+            totalChunks,
+            iv,
+            hash,
+            encryptedMetadata,
+            thumbnail,
+            ephemeral,
+            displayCategory,
+        })
     })
 
     // 3. Send chunks
@@ -452,6 +472,7 @@ export function requestFile(fileId, roomCode, totalChunks) {
         const chunks = []
         const timeout = setTimeout(() => {
             pendingDownloads.delete(fileId)
+            offChunk()  // Clean up listener to prevent leaks
             reject(new Error('File download timed out'))
         }, 30000)
 

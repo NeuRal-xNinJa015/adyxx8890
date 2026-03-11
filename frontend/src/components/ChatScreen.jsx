@@ -352,7 +352,7 @@ export default function ChatScreen({ roomCode, isCreator, onEndSession }) {
         } else {
             document.title = 'ADYX'
         }
-        return () => { document.title = 'ADYX' }
+        return () => { document.title = 'ADYX \u2014 Anonymous Communication' }
     }, [unreadCount])
 
     // Clear unread on focus
@@ -410,11 +410,7 @@ export default function ChatScreen({ roomCode, isCreator, onEndSession }) {
             sendingRef.current = false
         }
 
-        try {
-            if (document.hidden && Notification.permission === 'granted') {
-                new Notification('ADYX', { body: 'New message sent', silent: true })
-            }
-        } catch (_) { }
+
     }
 
     const handleFileReady = useCallback(async (fileData) => {

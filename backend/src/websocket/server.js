@@ -11,7 +11,7 @@ export function initializeWebSocket(httpServer) {
     // ── Heartbeat ──
     setInterval(() => {
         wss.clients.forEach(ws => {
-            const info = [...connections.values()].find(c => c.ws === ws);
+            const info = ws._adyxConnInfo;
             if (info && !info.alive) {
                 log('HEARTBEAT', `Terminating stale: ${info.deviceId || 'unknown'}`);
                 ws.terminate();

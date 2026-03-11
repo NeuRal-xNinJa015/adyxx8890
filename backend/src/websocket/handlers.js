@@ -37,6 +37,7 @@ export function handleMessage(ws, raw, deviceIdRef, authenticatedRef, connInfoRe
             roomRateWindow: [], msgRateWindow: []
         };
         connections.set(msg.deviceId, connInfoRef.current);
+        ws._adyxConnInfo = connInfoRef.current;  // O(1) heartbeat lookup
         debug('AUTH', `Authenticated: ${msg.deviceId}`);
         safeSend(ws, { type: 'auth_ok', deviceId: msg.deviceId, status: 'authenticated' });
         return;
