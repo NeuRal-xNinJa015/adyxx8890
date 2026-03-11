@@ -44,3 +44,12 @@ coverage/
 
 # Misc
 *.tgz
+
+# Electron build output
+release/
+
+# Vercel
+.vercel/
+
+# Lock files (optional — keep if you want reproducible installs)
+# package-lock.json
