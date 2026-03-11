@@ -20,7 +20,7 @@ import {
  */
 
 const BROWSER_PLAYABLE = new Set([
-    'mp3', 'wav', 'ogg', 'opus', 'm4a', 'aac', 'flac', 'aiff', 'aif', 'au'
+    'mp3', 'wav', 'ogg', 'opus', 'm4a', 'aac', 'flac', 'aiff', 'aif', 'au', 'webm'
 ])
 
 const FORMAT_LABELS = {
@@ -31,6 +31,7 @@ const FORMAT_LABELS = {
     'mid': 'MIDI', 'midi': 'MIDI', 'amr': 'AMR', 'au': 'AU',
     'ra': 'RealAudio', 'ac3': 'Dolby AC3', 'dts': 'DTS',
     'pcm': 'PCM', 'wv': 'WavPack', 'mka': 'Matroska Audio',
+    'webm': 'WebM Audio',
 }
 
 const FORMAT_QUALITY = {

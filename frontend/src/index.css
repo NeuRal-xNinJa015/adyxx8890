@@ -3579,11 +3579,20 @@ body::after {
   }
 
   .chat__sidebar {
-    display: none !important;
+    position: fixed !important;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 280px !important;
+    max-width: 85vw !important;
+    z-index: 100;
+    background: rgba(0, 0, 0, 0.97);
+    border-left: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: -8px 0 30px rgba(0, 0, 0, 0.5);
   }
 
   .chat__sidebar-toggle {
-    display: none;
+    display: flex;
   }
 
   .chat__messages {

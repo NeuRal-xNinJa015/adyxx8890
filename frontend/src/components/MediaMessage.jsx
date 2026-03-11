@@ -276,8 +276,8 @@ export default function MediaMessage({
 function getMimeFromCategory(category) {
     const mimeMap = {
         images: 'image/jpeg',
-        video: 'video/mp4',
-        audio: 'audio/mpeg',
+        video: 'video/webm',
+        audio: 'audio/webm',
         documents: 'application/octet-stream',
     }
     return mimeMap[category] || 'application/octet-stream'
