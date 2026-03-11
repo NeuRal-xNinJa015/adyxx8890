@@ -3460,14 +3460,70 @@ body::after {
     --text-4xl: 2rem;
   }
 
-  .home__actions {
-    flex-direction: column;
+  /* ── HOME: Enable scrolling on mobile ── */
+  .home {
+    position: fixed;
+    overflow-y: auto;
+    overflow-x: hidden;
+    align-items: flex-start;
+    padding: var(--space-lg) var(--space-md);
+    -webkit-overflow-scrolling: touch;
   }
 
+  .home__content {
+    padding-top: 40px;
+    padding-bottom: 40px;
+  }
+
+  /* Hide heavy background effects on mobile for performance */
+  .home__float,
+  .home__mark,
+  .home__side-text {
+    display: none;
+  }
+
+  /* Reduce brand spacing */
+  .home__brand {
+    margin-bottom: var(--space-xs);
+  }
+
+  .home__divider {
+    margin: var(--space-sm) auto;
+  }
+
+  .home__tagline-wrapper {
+    min-height: 1.4em;
+    margin-bottom: var(--space-md);
+  }
+
+  /* Stack action buttons vertically, full width */
+  .home__actions {
+    flex-direction: column;
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+    width: 100%;
+  }
+
+  .home__btn {
+    min-height: auto;
+    padding: var(--space-md) var(--space-md);
+  }
+
+  .home__btn-shortcut {
+    display: none;
+  }
+
+  .home__btn-desc {
+    font-size: 11px;
+    line-height: 1.4;
+  }
+
+  /* Compact features */
   .home__features {
     flex-direction: column;
     align-items: center;
-    gap: var(--space-md);
+    gap: var(--space-sm);
+    margin-bottom: var(--space-lg);
   }
 
   .home__feature-sep {
@@ -3475,20 +3531,13 @@ body::after {
     height: 1px;
   }
 
+  /* Compact stats */
   .home__stats {
     gap: var(--space-lg);
+    margin-bottom: var(--space-md);
   }
 
-  .home__mark,
-  .home__side-text,
-  .home__float {
-    display: none;
-  }
-
-  .home__btn-shortcut {
-    display: none;
-  }
-
+  /* ── JOIN ROOM ── */
   .join__char {
     width: 46px;
     height: 58px;
@@ -3499,6 +3548,7 @@ body::after {
     display: none;
   }
 
+  /* ── WAITING ROOM ── */
   .waiting__code-char {
     font-size: var(--text-2xl);
   }
@@ -3511,6 +3561,11 @@ body::after {
     display: none;
   }
 
+  .waiting__content {
+    padding: 0 var(--space-md);
+  }
+
+  /* ── CHAT ── */
   .msg {
     max-width: 85%;
   }
@@ -3539,6 +3594,7 @@ body::after {
     padding: 8px var(--space-md) var(--space-sm);
   }
 
+  /* ── SPLASH ── */
   .splash__corner,
   .splash__meta {
     display: none;
@@ -3554,10 +3610,6 @@ body::after {
   .chat__end-btn {
     padding: 6px 12px;
     min-height: 36px;
-  }
-
-  .home__btn {
-    min-height: 80px;
   }
 }
 
