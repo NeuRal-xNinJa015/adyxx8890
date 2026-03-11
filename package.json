@@ -1,0 +1,31 @@
+{
+    "name": "adyx-platform",
+    "private": true,
+    "version": "1.0.0",
+    "type": "module",
+    "main": "electron/main.cjs",
+    "description": "ADYX — Zero-Knowledge Encrypted Communication Platform",
+    "author": "ADYX",
+    "scripts": {
+        "start": "npm run build && npm run serve",
+        "serve": "cd backend && node src/index.js",
+        "dev": "concurrently -k -n server,client -c blue.bold,green.bold \"cd backend && node src/index.js\" \"cd frontend && npx vite --host\"",
+        "build": "cd frontend && npx vite build",
+        "clean": "cd frontend && rmdir /s /q dist 2>nul & echo Cleaned.",
+        "health": "curl -s http://localhost:8443/health | node -e \"process.stdin.on('data',d=>console.log(JSON.parse(d+'').status==='ok'?'\\x1b[32m✓ Server healthy\\x1b[0m':'\\x1b[31m✗ Server down\\x1b[0m'))\"",
+        "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
+        "electron:dev": "concurrently -k -n server,client,electron -c blue.bold,green.bold,magenta.bold \"cd backend && node src/index.js\" \"cd frontend && npx vite --host\" \"wait-on http://localhost:5173 && electron .\"",
+        "electron:build": "npm run build && npx @electron/packager . ADYX --platform=win32 --arch=x64 --out=release --overwrite --icon=build/icon.ico --asar",
+        "electron:start": "electron .",
+        "postinstall": "electron-builder install-app-deps"
+    },
+    "devDependencies": {
+        "@electron/packager": "^19.0.5",
+        "concurrently": "^9.1.0",
+        "electron": "^33.0.0",
+        "electron-builder": "^25.1.8",
+        "png-to-ico": "^3.0.1",
+        "sharp": "^0.34.5",
+        "wait-on": "^8.0.0"
+    }
+}

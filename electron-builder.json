@@ -1,0 +1,43 @@
+{
+    "appId": "com.adyx.desktop",
+    "productName": "ADYX",
+    "copyright": "Copyright © 2024 ADYX",
+    "directories": {
+        "output": "release",
+        "buildResources": "build"
+    },
+    "files": [
+        "electron/**/*",
+        "backend/**/*",
+        "frontend/dist/**/*",
+        "!**/.git",
+        "!**/node_modules/.cache",
+        "!**/.env",
+        "!**/test",
+        "!**/tests",
+        "!**/*.md",
+        "!**/.eslintrc*"
+    ],
+    "win": {
+        "target": [
+            {
+                "target": "nsis",
+                "arch": [
+                    "x64"
+                ]
+            }
+        ],
+        "artifactName": "ADYX-Setup-${version}.${ext}",
+        "signAndEditExecutable": false
+    },
+    "nsis": {
+        "oneClick": true,
+        "perMachine": false,
+        "createDesktopShortcut": true,
+        "createStartMenuShortcut": true,
+        "shortcutName": "ADYX",
+        "deleteAppDataOnUninstall": true
+    },
+    "asar": true,
+    "compression": "normal"
+}
