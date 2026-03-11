@@ -6,8 +6,10 @@ import { rooms } from '../core/RoomManager.js';
 import { fileStore } from '../core/FileManager.js';
 import { log } from '../utils/logger.js';
 
+const ALLOWED_ORIGIN = process.env.CORS_ORIGIN || '*';
+
 export const CORS_HEADERS = {
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
 };

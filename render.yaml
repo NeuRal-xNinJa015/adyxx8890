@@ -1,11 +1,11 @@
 services:
   - type: web
-    name: adyx
+    name: adyx-backend
     runtime: node
     plan: free
-    rootDir: .
-    buildCommand: cd frontend && npm install && npm run build && cd ../backend && npm install
-    startCommand: cd backend && node src/index.js
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: node src/index.js
     envVars:
       - key: PORT
         value: 10000
